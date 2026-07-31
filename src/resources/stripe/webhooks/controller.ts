@@ -31,6 +31,7 @@ async function receiveUpdates(req: Request, res: Response) {
 
   // 2. Handle Events (Olayları İşleme)
   switch (event.type) {
+    // 🟢 Başarılı Ödeme
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session;
       console.log(`✅ Checkout Session ${session.id} was successful!`);
@@ -40,6 +41,7 @@ async function receiveUpdates(req: Request, res: Response) {
       break;
     }
 
+    // ⏳ Süresi Dolan Ödeme Oturumu
     case 'checkout.session.expired': {
       const session = event.data.object as Stripe.Checkout.Session;
       console.log(`⏳ Checkout Session ${session.id} expired.`)
@@ -53,12 +55,68 @@ async function receiveUpdates(req: Request, res: Response) {
       // İleride buraya payment failed servisi eklenebilir
       break;
     }
+
     case 'checkout.session.async_payment_succeeded': {
       const session = event.data.object as Stripe.Checkout.Session;
       console.log(`✅ Async Payment succeeded for Checkout Session ${session.id}.`)
       // İleride buraya payment succeeded servisi eklenebilir
       break;
     }
+
+    // 🔴 Para İadesi İşlemi
+    case 'charge.refunded': {
+      const charge = event.data.object as Stripe.Charge;
+      console.log(`💸 Charge ${charge.id} was refunded.`)
+
+      // service.ts dosyasındaki handleRefund fonksiyonumuzu çağırıyoruz
+      await checkoutService.handleRefund(charge.id);
+      break;
+    }
+
+    // 📦 Ürün Güncelleme / Ekleme İşlemi
+    case 'product.created':
+    case 'product.updated':
+    case 'product.deleted': {
+      const product = event.data.object as Stripe.Product;
+      console.log(`📦 Product event received for ID: ${product.id}`);
+      await checkoutService.handleProductUpdated(product.id);
+      break;
+    }
+
+    // 🗑️ Ürün Silme Olayı
+    case 'product.deleted': {
+      const deletedProduct = event.data.object as unknown as Stripe.DeletedProduct;
+      console.log(`🗑️ Product deleted event received for ID: ${deletedProduct.id}`);
+      await checkoutService.handleProductDeleted(deletedProduct.id);
+      break;
+    }
+
+    // 🏷️ Fiyat Değişikliği / Yeni Fiyat Ekleme
+    case 'price.created':
+    case 'price.updated':{
+      const price = event.data.object as Stripe.Price;
+      console.log(`Price update event received for ID: ${price.id}`);
+      await checkoutService.handlePriceCreatedOrUpdated(price.id);
+      break;
+    }
+
+    // 👤 Müşteri Bilgisi Güncelleme
+    case 'customer.updated':{
+      const customer = event.data.object as Stripe.Customer;
+      console.log(`👤 Customer update event received for ID: ${customer.id}`);
+      await checkoutService.handleCustomerUpdated(customer.id);
+      break;
+    }
+
+    // ⚠️ Ödeme İtirazı / Chargeback (Admin için kritik)
+    case 'charge.dispute.created': {
+      const dispute = event.data.object as Stripe.Dispute;
+      console.log(`⚠️ Dispute created event received for ID: ${dispute.id}`);
+      await checkoutService.handleDisputeCreated(dispute.id);
+      break;
+    }
+
+    
     default:
       // Unexpected event type
       console.log(`ℹ️ Unhandled event type ${event.type}.`);

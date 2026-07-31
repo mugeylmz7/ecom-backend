@@ -5,9 +5,6 @@ const router: Router = Router()
 
 // import routes
 
-// Webhook rotası
-router.post('/webhooks', controller.receiveUpdates)
-
 // Front-end'den gelen Pay Total isteğini karşılayan rota
 router.post('/checkout', controller.createCheckout)
 

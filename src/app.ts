@@ -13,27 +13,30 @@ const app: Application = express()
 
 // middleware
 app.disable('x-powered-by')
-app.use(cors())
+app.use(cors({ origin: 'http://localhost:3000' }))
 app.use(helmet())
 app.use(compression())
+
+// 1. Stripe Webhook Endpoint (Stripe imza doğrulaması için RAW body gereklidir, express.json'dan ÖNCE olmalıdır)
+app.post('/webhook', express.raw({ type: 'application/json' }), stripeWebhooksController.receiveUpdates)
+
+// 2. Genel İstekler İçin JSON Parsing
 app.use(
   express.urlencoded({
     extended: true,
     limit: process.env.REQUEST_LIMIT || '100kb',
   }),
 )
-
-app.use(cors({ origin: 'http://localhost:3000' }))
-app.post('/webhook', express.raw({ type: 'application/json' }), stripeWebhooksController.receiveUpdates)
 app.use(express.json())
 
-// health check
+// Health check
 app.get('/', (req: Request, res: Response) => {
   res.status(200).json({
     'health-check': 'OK: top level api working',
   })
 })
 
+// API Rotaları (/v1/checkout vb.)
 app.use('/v1/', routes)
 
 // Handle unknown endpoints
