@@ -1,5 +1,19 @@
 import supertest from 'supertest'
+import { describe, expect, jest, test } from '@jest/globals'
 import app from '../../src/app'
+
+// Stripe servisinin test esnasında patlamasını önlemek için Stripe modülünü mock'luyoruz
+jest.mock('../../src/common/stripe', () => ({
+  stripe: {
+    checkout: {
+      sessions: {
+        retrieve: jest.fn(),
+      },
+    },
+  },
+  stripeApiKey: '',
+  endpointSecret: '',
+}))
 
 const request = supertest(app)
 
