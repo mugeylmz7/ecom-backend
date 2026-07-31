@@ -6,4 +6,7 @@ const stripeApiKey = process.env.STRIPE_SECRET_KEY || '';
 if (!endpointSecret || !stripeApiKey ) {
   console.warn('Stripe keys are missing, check the setup and try again.')
 }
-export const stripe = stripeLibrary(stripeApiKey);
+
+export const stripe = new stripeLibrary(stripeApiKey, {
+  apiVersion: '2023-10-16' as any,
+});
