@@ -1,5 +1,8 @@
 import stripeLibrary from 'stripe';
-import './env'
+import dotenv from 'dotenv'
+
+// env değişkenlerini yüklemek için:
+dotenv.config()
 
 export const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 export const stripeApiKey = process.env.STRIPE_API_KEY || '';
